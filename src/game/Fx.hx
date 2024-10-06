@@ -151,10 +151,17 @@ class Fx extends GameChildProcess {
 		});
 	}
 
-
+	public inline function blob(x:Float, y:Float, color:Col,amnt:Int){
+		for(i in 0...amnt) {
+			var p = allocMain_add( D.tiles.fxDot, x+rnd(0,3,true), y+rnd(0,3,true) );
+			p.alpha = rnd(0.4,1);
+			p.colorAnimS(color, 0x762087, rnd(0.6, 3)); // fade particle color from given color to some purple
+		}
+	
+	}
 	/**
 		A small sample to demonstrate how basic particles work. This example produces a small explosion of yellow dots that will fall and slowly fade to purple.
-
+11
 		USAGE: fx.dotsExplosionExample(50,50, 0xffcc00)
 	**/
 	public inline function dotsExplosionExample(x:Float, y:Float, color:Col) {

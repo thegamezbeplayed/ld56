@@ -77,6 +77,16 @@ class LPoint {
 		return 'LPoint<${M.pretty(cxf)},${M.pretty(cyf)} / $levelXi,$levelYi>';
 	}
 
+	public static inline function createBoth(v:Int){
+		var p = new LPoint().setLevelCase(v,v,v,v);
+		return p;
+	}
+
+	public inline function setBoth(v:Int) {
+		cx = cy = v;
+		xr = yr = 0;
+	}
+
 	public static inline function fromCase(cx:Float, cy:Float) {
 		return new LPoint().setLevelCase( Std.int(cx), Std.int(cy), cx%1, cy%1 );
 	}

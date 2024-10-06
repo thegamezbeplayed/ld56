@@ -4,6 +4,8 @@ enum abstract GameAction(Int) to Int {
 	var MoveRight;
 	var MoveUp;
 	var MoveDown;
+        
+	var Atk;
 
 	var Jump;
 	var Restart;
@@ -28,12 +30,18 @@ enum abstract GameAction(Int) to Int {
 /** Entity state machine. Each entity can only have 1 active State at a time. **/
 enum abstract State(Int) {
 	var Normal;
+	var Wander;
+	var Engaged;
+	var Carry;
 }
 
 
 /** Entity Affects have a limited duration in time and you can stack different affects. **/
 enum abstract Affect(Int) {
 	var Stun;
+	var Dodge;
+	var Shield;
+	var Absorb;
 }
 
 enum abstract LevelMark(Int) to Int {

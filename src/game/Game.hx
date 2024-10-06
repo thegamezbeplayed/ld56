@@ -23,6 +23,7 @@ class Game extends AppChildProcess {
 	var curGameSpeed = 1.0;
 	var slowMos : Map<SlowMoId, { id:SlowMoId, t:Float, f:Float }> = new Map();
 
+	public var player: sample.SamplePlayer;
 
 	public function new() {
 		super();
@@ -54,9 +55,25 @@ class Game extends AppChildProcess {
 		return ME!=null && !ME.destroyed;
 	}
 
+	public function exitToLevel(dx:Int, dy:Int) {
+		trace('edging');
+		var gx = level.data.worldX + player.attachX + dx*2*Const.GRID;
+		var gy = level.data.worldY + player.attachY + dy*2*Const.GRID;
+		for(l in Assets.worldData.all_worlds.SampleWorld.levels) {
+			if( gx>=l.worldX && gx<l.worldX+l.pxWid && gy>=l.worldY && gy<l.worldY+l.pxHei ) {
+				var x = gx-l.worldX;
+				var y = gy-l.worldY;
+				startLevel(l, x, y);
+				return true;
+			}
+		}
+		return false;
+	}
 
+	var lastStartX = -1.;
+	var lastStartY = -1.;
 	/** Load a level **/
-	function startLevel(l:World.World_Level) {
+	function startLevel(l:World.World_Level,startX=-1., startY=-1.) {
 		if( level!=null )
 			level.destroy();
 		fx.clear();
@@ -71,6 +88,13 @@ class Game extends AppChildProcess {
 		hud.onLevelStart();
 		dn.Process.resizeAll();
 		dn.Gc.runNow();
+		for (d in level.data.l_Entities.all_Mob){
+                        switch d.f_type {
+                                case 'Player': player = new sample.SamplePlayer(d);
+                                default: new Mob(d);
+                        }
+                }
+
 	}
 
 

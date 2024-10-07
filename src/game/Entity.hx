@@ -1,6 +1,7 @@
 class Entity {
   public static var ALL : FixedArray<Entity> = new FixedArray(1024);
   public static var GC : FixedArray<Entity> = new FixedArray(ALL.maxSize);
+  public var data : Entity_Mob;
 
   // Various getters to access all important stuff easily
   public var app(get,never) : App; inline function get_app() return App.ME;
@@ -228,7 +229,7 @@ class Entity {
     life = new Stat();
     setPosCase(5,5);
 
-    initLife(1);
+    initLife(5);
     state = Normal;
     actions = new RecyclablePool(15, ()->new tools.ChargedAction());
 
@@ -287,7 +288,8 @@ class Entity {
       onTargetReached();
   }
 
-  function onTargetReached() {}
+  function onTargetReached() {
+  }
 
   function set_pivotY(v) {
     pivotY = M.fclamp(v,0,1);
@@ -319,7 +321,7 @@ class Entity {
     life.v -= dmg;
     lastDmgSource = from;
     onDamage(dmg, from);
-    if( life.v<=0 )
+    if( life.v<=0 || mass <=0)
       onDie();
   }
 
@@ -793,6 +795,7 @@ class Entity {
 		Post-update loop, which is guaranteed to happen AFTER any preUpdate/update. This is usually where render and display is updated
    **/
   public function postUpdate() {
+    debugFloat(mass);
     spr.x = sprX;
     spr.y = sprY;
     spr.scaleX = dir*sprScaleX * sprSquashX;
@@ -836,14 +839,30 @@ class Entity {
       debugBounds.x = Std.int(attachX);
       debugBounds.y = Std.int(attachY);
     }
-  }
 
-  /**
+    for( e in Entity.ALL ) {
+      if(_victims.contains(e)) continue;
+      var dist = getInRadius(e,radius,true);
+
+      if( dist > 0) {
+	e.hit(0,this);
+	if(mass>e.mass){
+	  var ang = Math.atan2(e.yy-yy, e.xx-xx);
+	  var rforce = 0.0025 * mass;
+	  var repelPower = (radius+e.radius - dist) / (radius+e.radius);
+	  e.vBump.dx += Math.cos(ang) * repelPower * rforce/e.mass;
+	  e.vBump.dy += Math.sin(ang) * repelPower * rforce/e.mass;
+	}
+      }
+
+    }
+  }
+    /**
 		Loop that runs at the absolute end of the frame
-   **/
-  public function finalUpdate() {
-    prevFrameAttachX = attachX;
-    prevFrameAttachY = attachY;
+     **/
+    public function finalUpdate() {
+      prevFrameAttachX = attachX;
+      prevFrameAttachY = attachY;
   }
 
 

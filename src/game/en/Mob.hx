@@ -4,7 +4,6 @@ class Mob extends Entity {
 
   public static var ALL : FixedArray<Mob> = new FixedArray(40);
   var leash:Bool;
-  var data : Entity_Mob;
 
   var target: Entity;
 
@@ -17,7 +16,7 @@ class Mob extends Entity {
   var disp : h2d.Tile;
   var sprName: String = "0" ;
   //
-  public function new(d) {
+  public function new(d,?dis:Int) {
     super();
     ALL.push(this);
 
@@ -36,6 +35,8 @@ class Mob extends Entity {
     wid = spr.frameData.wid *d.f_size;
     hei = spr.frameData.hei * d.f_size;
 
+    if(dis!=0)
+      setPosCase(d.cx-dis, d.cy-dis);
 
     leash = false;
     startState(Wander);
@@ -52,13 +53,15 @@ class Mob extends Entity {
     if(data.f_aggro) mul = 2;
     speeds.set(Engaged,baseSpeed*mul);
     switch d.f_type {
-      case 'prot':
+      case 'alg':
       scolor = Green;
       case 'theo':
       scolor = Orange;
       case 'hel':
       sprName = 'Hel';
       scolor = Yellow;
+      case 'trich':
+      scolor = Lime;
       default:
       sprName="0";
       scolor = Blue;
@@ -77,9 +80,8 @@ class Mob extends Entity {
 
   override function onDamage(dmg:Int, from:Entity){
     switch data.f_type{
-      case 'hel':
-      case 'theo':
-      if(!_victims.contains(from))
+      case 'hel','theo':
+      if(!_victims.contains(from)&&mass>from.mass)
 	from.grab(this);
       default:
       setAffectS(Shield, 1);
@@ -92,9 +94,18 @@ class Mob extends Entity {
       case Engaged:
 	seek(game.player);
       case Wander:
-	wander();
+	if(data.f_aggro)
+	  wander();
+	else{
+	  switch(data.f_type){
+	    case 'trich':
+	      latch();
+	     default:
+	      track();
+	  }
+	}
       case Normal:
-	cancelMove();
+      	startState(Wander);
       default:
     }
     setMoveSpeed();
@@ -113,13 +124,33 @@ class Mob extends Entity {
     var dh = new dn.DecisionHelper(level.cachedEmptyPoints.filter(pt->distCase(pt.cx,pt.cy) <4));
     dh.score( pt->-pt.distCase(t)*0.5 );
     var pt = dh.getBest();
+    if(pt!=null)
     gotoCase(pt.cx,pt.cy);
+  }
+
+  function latch(){
+    var dh = new dn.DecisionHelper(level.cachedEmptyPoints.filter(pt->distCase(pt.cx,pt.cy) <6));
+    dh.score( _->rnd(0,2) );
+    var pt = dh.getBest();
+
+    if(pt!=null)
+      gotoCase(cx,0);
+  }
+
+  function track(){
+    var dh = new dn.DecisionHelper(level.cachedEmptyPoints.filter(pt->distCase(pt.cx,pt.cy) <6));
+    dh.score( _->rnd(0,2) );
+    var pt = dh.getBest();
+    
+    if(pt!=null)
+    gotoCase(cx,pt.cy);
   }
 
   function wander(){
     var dh = new dn.DecisionHelper(level.cachedEmptyPoints.filter(pt->distCase(pt.cx,pt.cy) <4));
     dh.score( _->rnd(0,2) );
     var pt = dh.getBest();
+    if(pt!=null)
     gotoCase(pt.cx,pt.cy);
   }
 
@@ -153,6 +184,10 @@ class Mob extends Entity {
 
   }
 
+  override function onTargetReached(){
+    startState(Normal);
+  }
+
   /** X collisions **/
   override function onPreStepX() {
     super.onPreStepX();
@@ -172,7 +207,6 @@ class Mob extends Entity {
 
     // Land on ground
     if( yr>1 && level.hasCollision(cx,cy+1) ) {
-      setSquashY(0.5);
       vBase.dy = 0;
       vBump.dy = 0;
       yr = 1;
@@ -180,8 +214,10 @@ class Mob extends Entity {
     }
 
     // Ceiling collision
-    if( yr<0.2 && level.hasCollision(cx,cy-1) )
+    if( yr<0.2 && level.hasCollision(cx,cy-M.round(1+radius*2) )){
       yr = 0.2;
+      cancelMove(true);
+    }
   }
 
   override function fixedUpdate(){
@@ -191,7 +227,7 @@ class Mob extends Entity {
 
     if( canMoveToTarget() ) {
       var d = distPx(moveTarget.levelX, moveTarget.levelY);
-      if( d>brakeDist ) {
+      if(d>brakeDist){
 	invalidateDebugBounds = true;
 
 	var a = Math.atan2(moveTarget.levelY-attachY, moveTarget.levelX-attachX);
@@ -199,14 +235,7 @@ class Mob extends Entity {
 	vBase.dy=Math.sin(a)*moveSpeed;
       }
       else{
-	vBase.dx*=0.87;
-	vBase.dy*=0.87;
-	if(vBase.dx < vBase.clearThreshold)
-	  vBase.dx = vBase.clearThreshold;
-
-	if(vBase.dy < vBase.clearThreshold)
-	  vBase.dy = vBase.clearThreshold;
-
+	cancelMove(true);
       }
 
     }
@@ -220,21 +249,24 @@ class Mob extends Entity {
 
   override function postUpdate(){
     super.postUpdate();
-
-    debugFloat(mass);
+    debug('$cy,${moveTarget.cy}');
     for(v in _victims){
+      if(v.data.f_type !='Player')
+	continue;
 
       v.vBase.dx = vBase.dx;
       v.vBase.dy = vBase.dy;
-      if(!v.hasAffect(Absorb)) _victims.remove(v);
-      if(!v.cd.hasSetS("drain",1))
+      if(!v.hasAffect(Absorb)||!v.isAlive()) _victims.remove(v);
+      if(!v.cd.hasSetS("drain",1)){
+	v.blink(Red);
 	v.cd.onComplete("drain",()->{
+	  v.hit(1,this);
 	  mass+=v.mass*0.125;
 	  v.mass +=-0.25;
 	  if(getInRadius(v,radius)<0)
 	  _victims.remove(v);
 	});
-
+      }
     }
   }
 }

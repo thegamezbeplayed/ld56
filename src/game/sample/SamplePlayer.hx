@@ -12,16 +12,17 @@ class SamplePlayer extends Entity {
 
   var ca : ControllerAccess<GameAction>;
   var pressQueue : Map<GameAction, Float> = new Map();
-  var speedMul = 0.15;
+  var speedMul = 0.3;
   var disp : h2d.Tile;
+
+  var origScale: Float = 0.;
 
   public function new(d) {
     super();
-
+    data = d;
     useLdtkEntity(d);
     // Misc inits
     vBase.setFricts(0.84, 0.94);
-
     // Camera tracks this
     camera.trackEntity(this, true);
     camera.clampToLevelBounds = true;
@@ -42,18 +43,18 @@ class SamplePlayer extends Entity {
 //    var b = new h2d.Bitmap( h2d.Tile.fromColor(Red, iwid, ihei), spr );
 
     spr.setCenterRatio(0.5,1);
-    trace(spr.frameData.wid);
-
+    origScale = sprScaleX;
+    S.Pop(0.5);
   }
 
   override function onStateChange(old:State,newState:State){
     switch(newState){
       case Carry:
-	speedMul = 0.015;
+	speedMul = 0.125;
       case Normal:
-	speedMul = 0.15;
+	speedMul = 0.3;
       default:
-	speedMul = 0.15;
+	speedMul = 0.3;
     }
   }
 
@@ -116,7 +117,6 @@ class SamplePlayer extends Entity {
 
     // Land on ground
     if( yr>1 && level.hasCollision(cx,cy+1) ) {
-      setSquashY(0.5);
       vBase.dy = 0;
       vBump.dy = 0;
       yr = 1;
@@ -125,7 +125,7 @@ class SamplePlayer extends Entity {
     }
 
     // Ceiling collision
-    if( yr<0.2 && level.hasCollision(cx,cy-1) )
+    if( yr<0.2 && level.hasCollision(cx,cy-M.round(1+radius*1.5) ))
       yr = 0.2;
   }
 
@@ -194,7 +194,7 @@ class SamplePlayer extends Entity {
     //queueCommandPress(Atk);
     for(e in getVictims(radius)) {
       if( ca.isPressed(Atk) && e.mass < mass) {
-	setSquashY(0.35);
+	//setSquashY(0.35);
 	e.grab(this);
 	startState(Carry);
       }
@@ -204,7 +204,7 @@ class SamplePlayer extends Entity {
   override function postUpdate(){
     super.postUpdate();
     //debug(state);
-    for( e in Entity.ALL ) {
+    /*for( e in Entity.ALL ) {
       if(_victims.contains(e)) continue;
       var dist = getInRadius(e,radius,true);
 
@@ -218,7 +218,7 @@ class SamplePlayer extends Entity {
 	e.vBump.dx += Math.cos(ang) * repelPower * rforce/e.mass;
 	e.vBump.dy += Math.sin(ang) * repelPower * rforce/e.mass;
       }
-    }
+    }*/
     for(v in _victims){
       v.debugFloat(v.getAffectDurationS(Absorb));
 
@@ -228,14 +228,23 @@ class SamplePlayer extends Entity {
 	_victims.remove(v);
 	if(_victims.allocated == 0) startState(Normal);
       }
-      if(!v.cd.hasSetS("drain",0.5))
+      if(!v.cd.hasSetS("drain",0.5)){
+	S.Slurp1(1).pitchRandomly();
+	v.blink(Red);
 	v.cd.onComplete("drain",()->{
 	  v.hit(1,this);
-	  mass+=v.mass*0.25;
+	  v.mass += -0.25;
+	  if(life.isMax())
+	  mass+=v.mass*0.05;
+	  else
+	  life.v++;
 	});
+      }
     }
 
-
-
+    if(mass!=data.f_mass){
+      var mr = mass/data.f_mass;
+      sprScaleX = sprScaleY = origScale *mr;
+    }
   }
 }

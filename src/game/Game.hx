@@ -36,13 +36,13 @@ class Game extends AppChildProcess {
 
 		scroller = new h2d.Layers();
 		root.add(scroller, Const.DP_BG);
-		scroller.filter = new h2d.filter.Nothing(); // force rendering for pixel perfect
-
+		scroller.filter = new dn.heaps.filter.FogTeint(Blue,0.128);
 		fx = new Fx();
 		hud = new ui.Hud();
 		camera = new Camera();
 
 		startLevel(Assets.worldData.all_worlds.SampleWorld.all_levels.FirstLevel);
+		Assets.playMusic(true);
 	}
 
 
@@ -55,47 +55,55 @@ class Game extends AppChildProcess {
 		return ME!=null && !ME.destroyed;
 	}
 
-	public function exitToLevel(dx:Int, dy:Int) {
-		trace('edging');
-		var gx = level.data.worldX + player.attachX + dx*2*Const.GRID;
-		var gy = level.data.worldY + player.attachY + dy*2*Const.GRID;
-		for(l in Assets.worldData.all_worlds.SampleWorld.levels) {
-			if( gx>=l.worldX && gx<l.worldX+l.pxWid && gy>=l.worldY && gy<l.worldY+l.pxHei ) {
-				var x = gx-l.worldX;
-				var y = gy-l.worldY;
-				startLevel(l, x, y);
-				return true;
-			}
-		}
-		return false;
-	}
+  public function exitToLevel(dx:Int, dy:Int) {
+    var gx = level.data.worldX + player.attachX + dx*2*Const.GRID;
+    var gy = level.data.worldY + player.attachY + dy*2*Const.GRID;
+    for(l in Assets.worldData.all_worlds.SampleWorld.levels) {
+      if( gx>=l.worldX && gx<l.worldX+l.pxWid && gy>=l.worldY && gy<l.worldY+l.pxHei ) {
+	var x = gx-l.worldX;
+	var y = gy-l.worldY;
+	startLevel(l, x, y);
+	return true;
+      }
+    }
+    return false;
+  }
 
-	var lastStartX = -1.;
-	var lastStartY = -1.;
-	/** Load a level **/
-	function startLevel(l:World.World_Level,startX=-1., startY=-1.) {
-		if( level!=null )
-			level.destroy();
-		fx.clear();
-		for(e in Entity.ALL) // <---- Replace this with more adapted entity destruction (eg. keep the player alive)
-			e.destroy();
-		garbageCollectEntities();
+  var lastStartX = -1.;
+  var lastStartY = -1.;
+  /** Load a level **/
+  function startLevel(l:World.World_Level,startX=-1., startY=-1.) {
+    if( level!=null )
+      level.destroy();
+    fx.clear();
+    for(e in Entity.ALL){
+      if(e.data.f_type=='Player') continue;
+      e.destroy();
+    }
+    garbageCollectEntities();
 
-		level = new Level(l);
-		// <---- Here: instanciate your level entities
+    level = new Level(l);
+    // <---- Here: instanciate your level entities
+    if(startX > 0 && startY>0){
+      player.setPosPixel(M.round(startX),M.round(startY));
+    }
 
-		camera.centerOnTarget();
-		hud.onLevelStart();
-		dn.Process.resizeAll();
-		dn.Gc.runNow();
-		for (d in level.data.l_Entities.all_Mob){
-                        switch d.f_type {
-                                case 'Player': player = new sample.SamplePlayer(d);
-                                default: new Mob(d);
-                        }
-                }
-
-	}
+    camera.centerOnTarget();
+    hud.onLevelStart();
+    dn.Process.resizeAll();
+    dn.Gc.runNow();
+    for (d in level.data.l_Entities.all_Mob){
+      switch d.f_type {
+	case 'Player': player = new sample.SamplePlayer(d);
+	case 'alg':
+	new Mob(d,1);
+	default:
+	new Mob(d,1);
+      }
+    }
+    lastStartX = player.attachX;
+    lastStartY = player.attachY;
+  }
 
 
 

@@ -90,7 +90,7 @@ class Entity {
   inline function set_ihei(v:Int) { invalidateDebugBounds=true; hei=v; return ihei; }
 
   public var radius (get,never):Float;
-  inline function get_radius() return largeRadius/Const.GRID;
+  inline function get_radius() return 0.75*(innerRadius/Const.GRID);
   /** Inner radius in pixels (ie. smallest value between width/height, then divided by 2) **/
   public var innerRadius(get,never) : Float;
   inline function get_innerRadius() return M.fmin(wid,hei)*0.5;
@@ -315,9 +315,15 @@ class Entity {
   }
   /** Inflict damage **/
   public function hit(dmg:Int, from:Null<Entity>) {
-    if( !isAlive())
+    if( !isAlive())// || hasAffect(Shield))
+      return;
+    
+    if(hasAffect(Shield))
       return;
 
+    if(dmg>0)
+      setAffectS(Shield,1.1);
+    
     life.v -= dmg;
     lastDmgSource = from;
     onDamage(dmg, from);
@@ -795,7 +801,7 @@ class Entity {
 		Post-update loop, which is guaranteed to happen AFTER any preUpdate/update. This is usually where render and display is updated
    **/
   public function postUpdate() {
-    debugFloat(mass);
+    debug('${life.v} | $mass');
     spr.x = sprX;
     spr.y = sprY;
     spr.scaleX = dir*sprScaleX * sprSquashX;
@@ -840,21 +846,30 @@ class Entity {
       debugBounds.y = Std.int(attachY);
     }
 
-    for( e in Entity.ALL ) {
-      if(_victims.contains(e)) continue;
-      var dist = getInRadius(e,radius,true);
+    if(!hasAffect(Absorb))
+    {
+      for( e in Entity.ALL ) {
+	if(_victims.contains(e))
+	  continue;
+	
+	var dist = getInRadius(e,radius,true);
 
-      if( dist > 0) {
-	e.hit(0,this);
-	if(mass>e.mass){
-	  var ang = Math.atan2(e.yy-yy, e.xx-xx);
-	  var rforce = 0.0025 * mass;
-	  var repelPower = (radius+e.radius - dist) / (radius+e.radius);
-	  e.vBump.dx += Math.cos(ang) * repelPower * rforce/e.mass;
-	  e.vBump.dy += Math.sin(ang) * repelPower * rforce/e.mass;
+	if( dist > 0) {
+	  e.hit(0,this);
+	  if(mass>e.mass){
+	    var ang = Math.atan2(e.yy-yy, e.xx-xx);
+	    var rforce = 0.0025 * mass;
+	    var repelPower = (radius+e.radius - dist) / (radius+e.radius);
+	    e.vBump.dx += Math.cos(ang) * repelPower * rforce/e.mass;
+	    e.vBump.dy += Math.sin(ang) * repelPower * rforce/e.mass;
+	  }
+	  else
+	  {
+	    if(data.f_type!='Player')
+	      e.hit(1,this);
+	  }
 	}
       }
-
     }
   }
     /**

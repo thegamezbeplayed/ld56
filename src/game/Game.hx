@@ -1,59 +1,76 @@
 class Game extends AppChildProcess {
-	public static var ME : Game;
+  public static var ME : Game;
 
-	/** Game controller (pad or keyboard) **/
-	public var ca : ControllerAccess<GameAction>;
+  /** Game controller (pad or keyboard) **/
+  public var ca : ControllerAccess<GameAction>;
 
-	/** Particles **/
-	public var fx : Fx;
+  /** Particles **/
+  public var fx : Fx;
 
-	/** Basic viewport control **/
-	public var camera : Camera;
+  /** Basic viewport control **/
+  public var camera : Camera;
 
-	/** Container of all visual game objects. Ths wrapper is moved around by Camera. **/
-	public var scroller : h2d.Layers;
+  /** Container of all visual game objects. Ths wrapper is moved around by Camera. **/
+  public var scroller : h2d.Layers;
 
-	/** Level data **/
-	public var level : Level;
+  /** Level data **/
+  public var level : Level;
 
-	/** UI **/
-	public var hud : ui.Hud;
+  /** UI **/
+  public var hud : ui.Hud;
+  var scoreTf : h2d.Text;
+  public var score : Int;
+  /** Slow mo internal values**/
+  var curGameSpeed = 1.0;
+  var slowMos : Map<SlowMoId, { id:SlowMoId, t:Float, f:Float }> = new Map();
 
-	/** Slow mo internal values**/
-	var curGameSpeed = 1.0;
-	var slowMos : Map<SlowMoId, { id:SlowMoId, t:Float, f:Float }> = new Map();
+  public var player: sample.SamplePlayer;
 
-	public var player: sample.SamplePlayer;
+  public function new() {
+    super();
 
-	public function new() {
-		super();
+    score = 0;
+    ME = this;
+    ca = App.ME.controller.createAccess();
+    ca.lockCondition = isGameControllerLocked;
+    createRootInLayers(App.ME.root, Const.DP_BG);
+    dn.Gc.runNow();
 
-		ME = this;
-		ca = App.ME.controller.createAccess();
-		ca.lockCondition = isGameControllerLocked;
-		createRootInLayers(App.ME.root, Const.DP_BG);
-		dn.Gc.runNow();
-
-		scroller = new h2d.Layers();
-		root.add(scroller, Const.DP_BG);
-		scroller.filter = new dn.heaps.filter.FogTeint(Blue,0.128);
-		fx = new Fx();
-		hud = new ui.Hud();
-		camera = new Camera();
-
-		startLevel(Assets.worldData.all_worlds.SampleWorld.all_levels.FirstLevel);
-		Assets.playMusic(true);
-	}
+    scroller = new h2d.Layers();
+    root.add(scroller, Const.DP_BG);
+    scroller.filter = new dn.heaps.filter.FogTeint(Blue,0.128);
+    fx = new Fx();
+    hud = new ui.Hud();
+    camera = new Camera();
+    scoreTf = new h2d.Text(Assets.fontPixelMono);
+    root.add(scoreTf, Const.DP_UI);
+    scoreTf.x = 5;
+    addScore(0);
+    startLevel(Assets.worldData.all_worlds.SampleWorld.all_levels.Level_0);
+    Assets.playMusic(true);
+  }
 
 
-	public static function isGameControllerLocked() {
-		return !exists() || ME.isPaused() || App.ME.anyInputHasFocus();
-	}
+  public static function isGameControllerLocked() {
+    return !exists() || ME.isPaused() || App.ME.anyInputHasFocus();
+  }
 
 
 	public static inline function exists() {
 		return ME!=null && !ME.destroyed;
 	}
+
+  public function addScore(?e:Entity, v) {
+    score+=v;
+    scoreTf.text = "SCORE: "+ dn.Lib.leadingZeros(score, 6);
+    if( e!=null ) {
+      var tf = new h2d.Text(Assets.fontPixelMono);
+      scroller.add(tf, Const.DP_UI);
+      tf.text = ""+v;
+      tf.setPosition(e.centerX-tf.textWidth*0.5, e.centerY-tf.textHeight*0.5);
+      tw.createMs(tf.alpha, 500|0, TEaseIn, 400).end( tf.remove );
+    }
+  }
 
   public function exitToLevel(dx:Int, dy:Int) {
     var gx = level.data.worldX + player.attachX + dx*2*Const.GRID;
@@ -77,7 +94,7 @@ class Game extends AppChildProcess {
       level.destroy();
     fx.clear();
     for(e in Entity.ALL){
-      if(e.data.f_type=='Player') continue;
+      if(e.data!=null && e.data.f_type=='Player') continue;
       e.destroy();
     }
     garbageCollectEntities();
@@ -101,6 +118,9 @@ class Game extends AppChildProcess {
 	new Mob(d,1);
       }
     }
+    
+    for(d in level.data.l_Entities.all_Message) new en.Message(d);
+    
     lastStartX = player.attachX;
     lastStartY = player.attachY;
   }

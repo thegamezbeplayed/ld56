@@ -9,6 +9,8 @@ class Assets {
   public static var SLIB = dn.heaps.assets.SfxDirectory.load("sfx",true);
   public static var musicIn : dn.heaps.Sfx;
   public static var musicOut : dn.heaps.Sfx;
+  public static var musicTran : dn.heaps.Sfx;
+  public static var musicFin : dn.heaps.Sfx;
 
   // Fonts
   public static var fontPixel : h2d.Font;
@@ -30,7 +32,9 @@ class Assets {
     dn.heaps.Sfx.setGroupVolume(0, 1);
     dn.heaps.Sfx.setGroupVolume(1, 0.7);
     musicIn = new dn.heaps.Sfx( hxd.Res.music.Intro );
-    //musicOut = new Sfx( hxd.Res.music.musicOut );
+    musicOut = new dn.heaps.Sfx( hxd.Res.music.Loop1 );
+    musicTran = new dn.heaps.Sfx( hxd.Res.music.Transition_To_Loop2 );
+    musicFin = new dn.heaps.Sfx( hxd.Res.music.Loop2 );
     // Fonts
     fontPixel = new hxd.res.BitmapFont( hxd.Res.fonts.pixel_unicode_regular_12_xml.entry ).toFont();
     fontPixelMono = new hxd.res.BitmapFont( hxd.Res.fonts.pixica_mono_regular_16_xml.entry ).toFont();
@@ -96,11 +100,21 @@ class Assets {
 
   public static function playMusic(isIn:Bool) {
     musicIn.stop();
-    //musicOut.stop();
+    musicOut.stop();
     if( isIn )
-      musicIn.playOnGroup(1,true);
-    //else
-     // musicOut.playOnGroup(1,true);
+      musicIn.playOnGroup(1,false).onEnd(()->{
+	loopMusic();
+      });
   }
 
+  public static function loopMusic(){
+    musicOut.playOnGroup(1,false).onEnd(()->{
+      musicTran.playOnGroup(1,false).onEnd(()->{
+	musicFin.playOnGroup(1,false).onEnd(()->{
+	  loopMusic();
+	});
+      });
+    });
+
+  }
 }

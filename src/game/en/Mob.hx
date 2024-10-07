@@ -56,9 +56,10 @@ class Mob extends Entity {
       case 'alg':
       scolor = Green;
       case 'theo':
+      sprName ='2';
       scolor = Orange;
       case 'hel':
-      sprName = 'Hel';
+      sprName = '1';
       scolor = Yellow;
       case 'trich':
       scolor = Lime;
@@ -84,8 +85,6 @@ class Mob extends Entity {
       if(!_victims.contains(from)&&mass>from.mass)
 	from.grab(this);
       default:
-      setAffectS(Shield, 1);
-
     }
   }
 
@@ -249,7 +248,7 @@ class Mob extends Entity {
 
   override function postUpdate(){
     super.postUpdate();
-    debug('$cy,${moveTarget.cy}');
+    //debug('$cy,${moveTarget.cy}');
     for(v in _victims){
       if(v.data.f_type !='Player')
 	continue;

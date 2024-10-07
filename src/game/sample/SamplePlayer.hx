@@ -78,6 +78,11 @@ class SamplePlayer extends Entity {
       return false;
   }
 
+  override function onDie(){
+    super.onDie();
+    App.ME.startGame();
+  }
+
   override function onTouchWall(wallX:Int, wallY:Int) {
     super.onTouchWall(wallX, wallY);
     if( wallX>0 && cx>=level.cWid-1 )
@@ -125,7 +130,7 @@ class SamplePlayer extends Entity {
     }
 
     // Ceiling collision
-    if( yr<0.2 && level.hasCollision(cx,cy-M.round(1+radius*1.5) ))
+    if( yr<0.2 && level.hasCollision(cx,cy-M.round(1+radius*2) ))
       yr = 0.2;
   }
 
@@ -192,7 +197,7 @@ class SamplePlayer extends Entity {
     super.frameUpdate();
   
     //queueCommandPress(Atk);
-    for(e in getVictims(radius)) {
+    for(e in getVictims(2.5*radius)) {
       if( ca.isPressed(Atk) && e.mass < mass) {
 	//setSquashY(0.35);
 	e.grab(this);
@@ -204,21 +209,7 @@ class SamplePlayer extends Entity {
   override function postUpdate(){
     super.postUpdate();
     //debug(state);
-    /*for( e in Entity.ALL ) {
-      if(_victims.contains(e)) continue;
-      var dist = getInRadius(e,radius,true);
-
-      if( dist > 0) {
-	e.hit(0,this);
-	var ang = Math.atan2(e.yy-yy, e.xx-xx);
-	var rforce = 0.0025 * mass;
-	var repelPower = (radius+e.radius - dist) / (radius+e.radius);
-	vBump.dx -= Math.cos(ang) * repelPower * rforce;
-	vBump.dy -= Math.sin(ang) * repelPower * rforce;
-	e.vBump.dx += Math.cos(ang) * repelPower * rforce/e.mass;
-	e.vBump.dy += Math.sin(ang) * repelPower * rforce/e.mass;
-      }
-    }*/
+  
     for(v in _victims){
       v.debugFloat(v.getAffectDurationS(Absorb));
 
@@ -227,17 +218,23 @@ class SamplePlayer extends Entity {
       if(!v.hasAffect(Absorb)||!v.isAlive()){
 	_victims.remove(v);
 	if(_victims.allocated == 0) startState(Normal);
+	continue;
       }
       if(!v.cd.hasSetS("drain",0.5)){
 	S.Slurp1(1).pitchRandomly();
 	v.blink(Red);
 	v.cd.onComplete("drain",()->{
 	  v.hit(1,this);
-	  v.mass += -0.25;
-	  if(life.isMax())
-	  mass+=v.mass*0.05;
+	  if(life.isMax()){
+	    if(v.mass>0){
+	      game.addScore(1);
+	      mass+=v.mass*0.05;
+	    }
+	  }
 	  else
-	  life.v++;
+	    life.v++;
+	  
+	  v.mass += -0.25;
 	});
       }
     }

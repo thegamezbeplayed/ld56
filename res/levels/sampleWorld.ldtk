@@ -9281,7 +9281,7 @@
 									"params": ["theo"]
 								}] },
 								{ "__identifier": "mass", "__type": "Float", "__value": 1.5, "__tile": null, "defUid": 28, "realEditorValues": [{ "id": "V_Float", "params": [1.5] }] },
-								{ "__identifier": "speed", "__type": "Float", "__value": 0.8, "__tile": null, "defUid": 29, "realEditorValues": [{ "id": "V_Float", "params": [0.8] }] },
+								{ "__identifier": "speed", "__type": "Float", "__value": 0.08, "__tile": null, "defUid": 29, "realEditorValues": [{ "id": "V_Float", "params": [0.08] }] },
 								{ "__identifier": "aggro", "__type": "Bool", "__value": true, "__tile": null, "defUid": 30, "realEditorValues": [{
 									"id": "V_Bool",
 									"params": [ true ]
@@ -9309,7 +9309,7 @@
 									"params": ["theo"]
 								}] },
 								{ "__identifier": "mass", "__type": "Float", "__value": 1.5, "__tile": null, "defUid": 28, "realEditorValues": [{ "id": "V_Float", "params": [1.5] }] },
-								{ "__identifier": "speed", "__type": "Float", "__value": 0.8, "__tile": null, "defUid": 29, "realEditorValues": [{ "id": "V_Float", "params": [0.8] }] },
+								{ "__identifier": "speed", "__type": "Float", "__value": 0.08, "__tile": null, "defUid": 29, "realEditorValues": [{ "id": "V_Float", "params": [0.08] }] },
 								{ "__identifier": "aggro", "__type": "Bool", "__value": true, "__tile": null, "defUid": 30, "realEditorValues": [{
 									"id": "V_Bool",
 									"params": [ true ]
@@ -9337,7 +9337,7 @@
 									"params": ["theo"]
 								}] },
 								{ "__identifier": "mass", "__type": "Float", "__value": 1.5, "__tile": null, "defUid": 28, "realEditorValues": [{ "id": "V_Float", "params": [1.5] }] },
-								{ "__identifier": "speed", "__type": "Float", "__value": 0.8, "__tile": null, "defUid": 29, "realEditorValues": [{ "id": "V_Float", "params": [0.8] }] },
+								{ "__identifier": "speed", "__type": "Float", "__value": 0.08, "__tile": null, "defUid": 29, "realEditorValues": [{ "id": "V_Float", "params": [0.08] }] },
 								{ "__identifier": "aggro", "__type": "Bool", "__value": true, "__tile": null, "defUid": 30, "realEditorValues": [{
 									"id": "V_Bool",
 									"params": [ true ]

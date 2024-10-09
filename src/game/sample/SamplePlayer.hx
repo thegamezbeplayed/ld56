@@ -224,7 +224,6 @@ class SamplePlayer extends Entity {
 	S.Slurp1(1).pitchRandomly();
 	v.blink(Red);
 	v.cd.onComplete("drain",()->{
-	  v.hit(1,this);
 	  if(life.isMax()){
 	    if(v.mass>0){
 	      game.addScore(1);
@@ -235,6 +234,7 @@ class SamplePlayer extends Entity {
 	    life.v++;
 	  
 	  v.mass += -0.25;
+	  v.hit(1,this);
 	});
       }
     }
